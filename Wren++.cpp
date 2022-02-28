@@ -188,14 +188,14 @@ LoadModuleFn VM::loadModuleFn = [](const char* mod) -> WrenLoadModuleResult {
     std::string path(mod);
     path += ".wren";
     std::string source;
-    // try
-    // {
-    //     source = wrenpp::detail::fileToString(path);
-    // }
-    // catch (const std::exception&)
-    // {
-    //     return {nullptr};
-    // }
+    try
+    {
+        source = wrenpp::detail::fileToString(path);
+    }
+    catch (const std::exception&)
+    {
+        return {nullptr};
+    }
     char* buffer = (char*)malloc(source.size());
     assert(buffer != nullptr);
     memcpy(buffer, source.c_str(), source.size());
