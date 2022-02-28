@@ -54,7 +54,7 @@ inline const char* errorTypeToString(WrenErrorType type)
     }
 }
 
-char* loadModuleFnWrapper(WrenVM* vm, const char* mod) { return wrenpp::VM::loadModuleFn(mod); }
+WrenLoadModuleResult loadModuleFnWrapper(WrenVM* vm, const char* mod) { return wrenpp::VM::loadModuleFn(mod); }
 
 void writeFnWrapper(WrenVM* vm, const char* text) { wrenpp::VM::writeFn(text); }
 
@@ -63,7 +63,7 @@ void errorFnWrapper(WrenVM*, WrenErrorType type, const char* module, int line, c
     wrenpp::VM::errorFn(type, module, line, message);
 }
 
-void* reallocateFnWrapper(void* memory, std::size_t newSize)
+void* reallocateFnWrapper(void* memory, std::size_t newSize, void* /*userData*/)
 {
     return wrenpp::VM::reallocateFn(memory, newSize);
 }
@@ -184,22 +184,22 @@ ClassContext& ClassContext::bindCFunction(
  * Uses malloc, because our reallocateFn is set to default:
  * it uses malloc, realloc and free.
  * */
-LoadModuleFn VM::loadModuleFn = [](const char* mod) -> char* {
+LoadModuleFn VM::loadModuleFn = [](const char* mod) -> WrenLoadModuleResult {
     std::string path(mod);
     path += ".wren";
     std::string source;
-    try
-    {
-        source = wrenpp::detail::fileToString(path);
-    }
-    catch (const std::exception&)
-    {
-        return NULL;
-    }
+    // try
+    // {
+    //     source = wrenpp::detail::fileToString(path);
+    // }
+    // catch (const std::exception&)
+    // {
+    //     return {nullptr};
+    // }
     char* buffer = (char*)malloc(source.size());
     assert(buffer != nullptr);
     memcpy(buffer, source.c_str(), source.size());
-    return buffer;
+    return {buffer, nullptr, nullptr};
 };
 
 WriteFn VM::writeFn = [](const char* text) -> void { std::cout << text; };
@@ -269,7 +269,8 @@ VM::~VM()
 
 Result VM::executeModule(const std::string& mod)
 {
-    const std::string source(loadModuleFn(mod.c_str()));
+    auto loadModuleRes = loadModuleFn(mod.c_str());
+    const std::string source(loadModuleRes.source);
     auto res = wrenInterpret(vm_, mod.c_str(), source.c_str());
 
     if (res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR)

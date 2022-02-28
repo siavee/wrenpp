@@ -19,7 +19,7 @@ extern "C" {
 namespace wrenpp
 {
 
-using LoadModuleFn = std::function<char*(const char*)>;
+using LoadModuleFn = std::function<WrenLoadModuleResult(const char*)>;
 using WriteFn = std::function<void(const char*)>;
 using ReallocateFn = std::function<void*(void*, std::size_t)>;
 using ErrorFn = std::function<void(WrenErrorType, const char*, int, const char*)>;
